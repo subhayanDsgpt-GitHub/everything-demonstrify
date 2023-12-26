@@ -1,6 +1,8 @@
 #!/bin/sh
 
-# Enable iptables Bridged Traffic on all the Nodes.
+set -e
+
+# Enable iptables Bridged Traffic on all the nodes.
 cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
 overlay
 br_netfilter
@@ -9,7 +11,7 @@ EOF
 sudo modprobe overlay
 sudo modprobe br_netfilter
 
-# sysctl params required by setup, params persist across reboots
+# sysctl params required by setup, params persist across reboots.
 cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
 net.bridge.bridge-nf-call-iptables  = 1
 net.bridge.bridge-nf-call-ip6tables = 1
@@ -20,12 +22,12 @@ EOF
 sudo sysctl --system
 
 
-# Disable Swap on all the Nodes.
+# Disable Swap on all the nodes.
 sudo swapoff -a
 (crontab -l 2>/dev/null; echo "@reboot /sbin/swapoff -a") | crontab - || true
 
 
-# Install CRI-O Runtime on all The Nodes.
+# Install CRI-O Runtime on all The nodes.
 OS="xUbuntu_22.04"
 
 VERSION="1.28"
@@ -50,7 +52,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable crio --now
 
 
-# Install Kubeadm & Kubelet & Kubectl on all Nodes.
+# Install Kubeadm & Kubelet & Kubectl on all nodes.
 sudo apt-get update
 sudo apt-get install -y apt-transport-https ca-certificates curl
 
@@ -60,7 +62,6 @@ sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://dl.k
 # Add the Kubernetes APT repository to your system.
 echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
 sudo apt-get update -y
-
 sudo apt-get install -y kubelet kubeadm kubectl
 
 # Add hold to the packages to prevent upgrades.
